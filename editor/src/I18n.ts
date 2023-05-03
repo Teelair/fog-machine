@@ -16,7 +16,7 @@ i18n
         translation: {
           "main-title": "FogMachine",
           import: "Import",
-          "import-description": "Import data from [Fog of World]",
+          "import-description": "Import data from Fog of World, GPX, or KML",
           export: "Export",
           "export-description": "Export data in [Fog of World] format",
           language: "Language",
@@ -26,7 +26,7 @@ i18n
           "error-invalid-format": "Invalid format.",
           "error-failed-to-load-snapshot": "Failed to load snapshot.",
           "import-dialog-description":
-            'All your data will be handled locally.\n\nAccept data format:\n- The "Sync" folder.\n- Files in the "Sync" folder.\n- A zip archive contains the "Sync" folder.\n\n',
+            'All your data will be handled locally.\n\nAccept data format:\n- The "Sync" folder.\n- Files in the "Sync" folder.\n- A zip archive contains the "Sync" folder.\n- A GPX file.\n- A KML file.\n\n',
           "import-dialog-drag-and-drop":
             "drag and drop [Fog of World] sync data",
           "import-dialog-select": "Select manually",

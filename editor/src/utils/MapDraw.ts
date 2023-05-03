@@ -96,4 +96,27 @@ export class MapDraw {
       this.map.removeControl(this.mapboxDraw);
     }
   }
+
+  drawBulkFeatures(geoJson: GeoJSON) {
+    // parse each line segments, apply to fogmap
+    let newMap = this.getCurrentFogMap();
+    for (const i in geoJson) {
+      const e = geoJson[i];
+      console.log(e.features);
+      for (const geo of e.features) {
+        if (geo.geometry.type == "LineString") {
+          const coordinates = geo.geometry.coordinates;
+
+          let [startLng, startLat] = coordinates[0];
+          for (let j = 1; j < coordinates.length; ++j) {
+            const [endLng, endLat] = coordinates[j];
+            console.log(newMap);
+            newMap = newMap.addLine(startLng, startLat, endLng, endLat);
+            [startLng, startLat] = [endLng, endLat];
+          }
+        }
+      }
+    }
+    this.updateFogMap(newMap, "all");
+  }
 }

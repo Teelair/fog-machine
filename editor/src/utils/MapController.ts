@@ -228,6 +228,11 @@ export class MapController {
     }
   }
 
+  //this is not the right way to do this LOL
+  performBulkImport(geoJson: any[]): void {
+    this.mapDraw?.drawBulkFeatures(geoJson);
+  }
+
   replaceFogMap(newMap: fogMap.FogMap): void {
     this.historyManager = new HistoryManager(fogMap.FogMap.empty);
     this.updateFogMap(newMap, "all");

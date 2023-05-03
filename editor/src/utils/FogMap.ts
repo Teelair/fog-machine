@@ -96,7 +96,7 @@ export class FogMap {
     endLng: number,
     endLat: number
   ): FogMap {
-    console.log(`[${startLng},${startLat}] to [${endLng},${endLat}]`);
+    // console.log(`[${startLng},${startLat}] to [${endLng},${endLat}]`);
     const [x0, y0] = FogMap.LngLatToGlobalXY(startLng, startLat);
     const [x1, y1] = FogMap.LngLatToGlobalXY(endLng, endLat);
 
@@ -134,7 +134,7 @@ export class FogMap {
           tile = Tile.createEmptyTile(tileX, tileY);
         }
         if (tile) {
-          console.log(`tile draw: tileX: ${tileX}, tileY: ${tileY}`);
+          // console.log(`tile draw: tileX: ${tileX}, tileY: ${tileY}`);
           let newTile;
           [newTile, x, y, px] = tile.addLine(
             x - (tileX << ALL_OFFSET),
@@ -183,7 +183,7 @@ export class FogMap {
           tile = Tile.createEmptyTile(tileX, tileY);
         }
         if (tile) {
-          console.log(`tile draw: tileX: ${tileX}, tileY: ${tileY}`);
+          // console.log(`tile draw: tileX: ${tileX}, tileY: ${tileY}`);
           let newTile;
           [newTile, x, y, py] = tile.addLine(
             x - (tileX << ALL_OFFSET),
@@ -433,9 +433,9 @@ export class Tile {
           block = Block.create(blockX, blockY, null);
         }
         if (block) {
-          console.log(
-            `block draw: blockx: ${blockX}, blocky: ${blockY} x: ${x}, y: ${y}`
-          );
+          // console.log(
+          //   `block draw: blockx: ${blockX}, blocky: ${blockY} x: ${x}, y: ${y}`
+          // );
           let newBlock;
           [newBlock, x, y, p] = block.addLine(
             x - (blockX << BITMAP_WIDTH_OFFSET),
@@ -481,9 +481,9 @@ export class Tile {
           block = Block.create(blockX, blockY, null);
         }
         if (block) {
-          console.log(
-            `block draw: blockx: ${blockX}, blocky: ${blockY} x: ${x}, y: ${y}`
-          );
+          // console.log(
+          //   `block draw: blockx: ${blockX}, blocky: ${blockY} x: ${x}, y: ${y}`
+          // );
           let newBlock;
           [newBlock, x, y, p] = block.addLine(
             x - (blockX << BITMAP_WIDTH_OFFSET),
@@ -518,7 +518,7 @@ export class Tile {
       if (Object.entries(mutableBlocks).length === 0) {
         return [null, x, y, p];
       } else {
-        console.log("return updated tile");
+        // console.log("return updated tile");
         Object.freeze(mutableBlocks);
         return [
           new Tile(this.filename, this.id, this.x, this.y, mutableBlocks),
@@ -721,7 +721,7 @@ export class Block {
     quadrants13: boolean
   ): [Block, number, number, number] {
     const mutableBitmap = new Uint8Array(this.bitmap);
-    console.log(`subblock draw: x:${x}, y:${y}, e:${e}`);
+    // console.log(`subblock draw: x:${x}, y:${y}, e:${e}`);
     // Draw the first pixel
     Block.setPoint(mutableBitmap, x, y, true);
     if (xaxis) {

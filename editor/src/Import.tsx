@@ -6,6 +6,8 @@ import { useDropzone } from "react-dropzone";
 import JSZip from "jszip";
 import { useTranslation } from "react-i18next";
 import { FogMap } from "./utils/FogMap";
+import { FeatureCollection, Geometry } from 'geojson';
+import { kml, gpx } from "@tmcw/togeojson";
 
 type Props = {
   mapController: MapController;
@@ -40,6 +42,20 @@ export async function createMapFromZip(data: ArrayBuffer): Promise<FogMap> {
   return map;
 }
 
+export async function createPathFromGPX(data: ArrayBuffer, textDecoder: TextDecoder, domParser: DOMParser): Promise<FeatureCollection> {
+  const dataAsText = textDecoder.decode(data);
+  const doc = domParser.parseFromString(dataAsText, "application/xml");
+
+  return gpx(doc);
+}
+
+export async function createPathFromKML(data: ArrayBuffer, textDecoder: TextDecoder, domParser: DOMParser): Promise<FeatureCollection> {
+  const dataAsText = textDecoder.decode(data);
+  const doc = domParser.parseFromString(dataAsText, "application/xml");
+
+  return kml(doc) as FeatureCollection<Geometry>;
+}
+
 export default function MyModal(props: Props): JSX.Element {
   const { t } = useTranslation();
   const { isOpen, setIsOpen, msgboxShow } = props;
@@ -48,7 +64,7 @@ export default function MyModal(props: Props): JSX.Element {
     const mapController = props.mapController;
     closeModal();
     if (mapController.fogMap !== FogMap.empty) {
-      // we need this because we do not support overriding in `mapController.addFoGFile`
+      // we need this because we do not support overriding in `mapRenderer.addFoGFile`
       msgboxShow("error", "error-already-imported");
       return;
     }
@@ -59,25 +75,104 @@ export default function MyModal(props: Props): JSX.Element {
     // TODO: improve file checking
     let done = false;
     files.forEach((file) => console.log(getFileExtension(file.name)));
-    if (files.every((file) => getFileExtension(file.name) === "")) {
-      const tileFiles = await Promise.all(
-        files.map(async (file) => {
-          const data = await readFileAsync(file);
-          return [file.name, data] as [string, ArrayBuffer];
-        })
-      );
-      const map = FogMap.createFromFiles(tileFiles);
-      mapController.replaceFogMap(map);
+
+    // const kmlAndGpxFiles = files.filter((file) => ["kml", "gpx"].includes(getFileExtension(file.name)));
+    // const remainingFiles = files.filter((file) => !["kml", "gpx"].includes(getFileExtension(file.name)));
+
+    // files.forEach((file, idx) => uniqueList[idx] = multiTypes.includes(getFileExtension(file.name)) ? 1 : 0);
+
+    const groupedFiles = files.reduce((acc, file) => {
+      const extension = getFileExtension(file.name);
+
+      if (!acc[extension]) {
+        acc[extension] = [file];
+      } else {
+        acc[extension].push(file);
+      }
+
+      return acc;
+    }, {} as { [key: string]: File[] });
+
+    if ("zip" in groupedFiles) {
+      if (mapController.fogMap !== FogMap.empty) {
+        // we need this because we do not support overriding in `mapRenderer.addFoGFile`
+        msgboxShow("error", "error-already-imported");
+        return;
+      }
+
+      const files = groupedFiles["zip"]
+
+      const data = await readFileAsync(files[0]);
+      if (data instanceof ArrayBuffer) {
+        const map = await createMapFromZip(data);
+        mapController.replaceFogMap(map);
+      }
       done = true;
-    } else {
-      if (files.length === 1 && getFileExtension(files[0].name) === "zip") {
-        const data = await readFileAsync(files[0]);
+    }
+
+    if ("" in groupedFiles) {
+      if (mapController.fogMap !== FogMap.empty) {
+        // we need this because we do not support overriding in `mapRenderer.addFoGFile`
+        msgboxShow("error", "error-already-imported");
+        return;
+      }
+
+      const files = groupedFiles[""]
+
+      if (files.every((file) => getFileExtension(file.name) === "")) {
+        const tileFiles = await Promise.all(
+          files.map(async (file) => {
+            const data = await readFileAsync(file);
+            return [file.name, data] as [string, ArrayBuffer];
+          })
+        );
+        const map = FogMap.createFromFiles(tileFiles);
+        mapController.replaceFogMap(map);
+        done = true;
+      }
+    }
+
+    let textDecoder: TextDecoder | null = null;
+    let domParser: DOMParser | null = null;
+
+    if ("gpx" in groupedFiles) {
+      if (!textDecoder) {
+        textDecoder = new TextDecoder("utf-8");
+        domParser = new DOMParser();
+      }
+      const files = groupedFiles["gpx"]
+
+      const geoJsonList = files.map(async (gpxFile) => {
+        const data = await readFileAsync(gpxFile);
         if (data instanceof ArrayBuffer) {
           const map = await createMapFromZip(data);
           mapController.replaceFogMap(map);
+          return await createPathFromGPX(data, textDecoder as TextDecoder, domParser as DOMParser);
         }
-        done = true;
+      });
+
+      mapController.performBulkImport(await Promise.all(geoJsonList));
+
+      done = true;
+    }
+    
+    if ("kml" in groupedFiles) {
+      if (!textDecoder) {
+        textDecoder = new TextDecoder("utf-8");
+        domParser = new DOMParser();
       }
+      const files = groupedFiles["kml"]
+
+      const geoJsonList = files.map(async (kmlFile) => {
+        const data = await readFileAsync(kmlFile);
+        if (data instanceof ArrayBuffer) {
+          return await createPathFromKML(data, textDecoder as TextDecoder, domParser as DOMParser);
+        }
+      });
+
+      mapController.performBulkImport(await Promise.all(geoJsonList));
+
+      done = true;
     }
 
     if (done) {
